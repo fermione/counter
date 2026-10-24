@@ -1,0 +1,1197 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+	<title>计数器</title>
+	<style>
+		:root {
+			color-scheme: light;
+			--bg: #f3f6ff;
+			--card: #ffffff;
+			--text: #1e293b;
+			--muted: #64748b;
+			--title: #334155;
+			--value: #0f172a;
+			--bg-gradient: linear-gradient(170deg, #eff4ff 0%, var(--bg) 46%, #ecfeff 100%);
+			--primary: #4f6df5;
+			--primary-hover: #415dde;
+			--minus-bg: #94a3b8;
+			--minus-hover: #64748b;
+			--border: #e2e8f0;
+			--shadow: 0 10px 30px rgba(71, 85, 105, 0.12);
+			--control-bg: #ffffff;
+			--control-text: #334155;
+			--control-hover-bg: #f8faff;
+			--control-hover-border: #bcd1ff;
+			--radius: 14px;
+		}
+
+		body[data-theme="dark"] {
+			color-scheme: dark;
+			--bg: #0f172a;
+			--card: #111827;
+			--text: #e2e8f0;
+			--muted: #94a3b8;
+			--title: #f1f5f9;
+			--value: #f8fafc;
+			--bg-gradient: linear-gradient(170deg, #0b1120 0%, #0f172a 48%, #111827 100%);
+			--primary: #6366f1;
+			--primary-hover: #4f46e5;
+			--minus-bg: #475569;
+			--minus-hover: #334155;
+			--border: #1f2937;
+			--shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+			--control-bg: #1f2937;
+			--control-text: #e2e8f0;
+			--control-hover-bg: #273449;
+			--control-hover-border: #4f46e5;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+			min-height: 100vh;
+			min-height: 100dvh;
+			font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", Roboto, sans-serif;
+			color: var(--text);
+			background: var(--bg-gradient);
+		}
+
+		.page {
+			width: 100%;
+			max-width: 980px;
+			margin: 0 auto;
+			padding: 20px;
+			min-height: 100vh;
+			min-height: 100dvh;
+		}
+
+		.top-bar {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 16px;
+		}
+
+		.top-actions {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+
+		.page-title {
+			margin: 0;
+			font-size: 30px;
+			font-weight: 800;
+			letter-spacing: 1px;
+			color: var(--title);
+		}
+
+		.page-title,
+		.reset-btn,
+		.settings-btn,
+		.modal-title,
+		.field label,
+		.inline-control-label,
+		.save-btn,
+		.restore-btn,
+		.btn-plus,
+		.btn-minus,
+		.counter-value {
+			user-select: none;
+			-webkit-user-select: none;
+			-webkit-touch-callout: none;
+		}
+
+		.settings-btn {
+			border: 1px solid var(--border);
+			background: var(--control-bg);
+			color: var(--control-text);
+			border-radius: 12px;
+			padding: 10px 14px;
+			min-height: 46px;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 22px;
+			line-height: 1;
+			cursor: pointer;
+			box-shadow: var(--shadow);
+			font-weight: 600;
+		}
+
+		.settings-btn:hover {
+			border-color: var(--control-hover-border);
+			background: var(--control-hover-bg);
+		}
+
+		.reset-btn {
+			border: 1px solid var(--border);
+			background: var(--control-bg);
+			color: var(--control-text);
+			border-radius: 12px;
+			padding: 10px 14px;
+			min-height: 46px;
+			cursor: pointer;
+			box-shadow: var(--shadow);
+			font-weight: 700;
+			font-size: 18px;
+			line-height: 1;
+		}
+
+		.reset-btn:hover {
+			border-color: var(--control-hover-border);
+			background: var(--control-hover-bg);
+		}
+
+		.counters {
+			display: flex;
+			flex-direction: column;
+			gap: 16px;
+		}
+
+		.counters.compact {
+			gap: 10px;
+		}
+
+		.counters.large-actions .btn-plus {
+			width: 96px;
+			height: 96px;
+			font-size: 24px;
+		}
+
+
+		.counters.huge-actions .btn-plus {
+			width: 112px;
+			height: 112px;
+			font-size: 26px;
+		}
+
+		.counters.huge-actions .btn-plus-name {
+			font-size: 22px;
+		}
+
+		.counters.huge-actions .btn-plus-symbol {
+			font-size: 36px;
+		}
+
+		.counters.huge-actions .counter-value {
+			padding-left: 18px;
+			margin: 0 4px 0 16px;
+		}
+
+		.counter-card {
+			background: var(--card);
+			border-radius: var(--radius);
+			border: 1px solid var(--border);
+			box-shadow: var(--shadow);
+			padding: 16px;
+			display: flex;
+			flex-direction: column;
+			gap: 0;
+		}
+
+		.counter-value {
+			position: relative;
+			overflow: hidden;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			flex: 1;
+			min-width: 0;
+			text-align: center;
+			font-size: 48px;
+			font-weight: 800;
+			line-height: 1;
+			height: 1.2em;
+			padding-left: 10px;
+			margin: 0 6px 0 10px;
+			color: var(--value);
+			user-select: none;
+			-webkit-user-select: none;
+			-webkit-touch-callout: none;
+		}
+
+		.value-digit {
+			position: absolute;
+			left: 0;
+			right: 0;
+			text-align: center;
+			will-change: transform, opacity;
+		}
+
+		.value-digit.current {
+			transform: translateY(0);
+			opacity: 1;
+		}
+
+		.value-digit.incoming.up {
+			transform: translateY(100%);
+			opacity: 0;
+		}
+
+		.value-digit.incoming.down {
+			transform: translateY(-100%);
+			opacity: 0;
+		}
+
+		.value-digit.incoming.enter.up {
+			animation: flip-in-up 200ms ease forwards;
+		}
+
+		.value-digit.incoming.enter.down {
+			animation: flip-in-down 200ms ease forwards;
+		}
+
+		.value-digit.current.exit.up {
+			animation: flip-out-up 200ms ease forwards;
+		}
+
+		.value-digit.current.exit.down {
+			animation: flip-out-down 200ms ease forwards;
+		}
+
+		@keyframes flip-in-up {
+			from {
+				transform: translateY(100%);
+				opacity: 0;
+			}
+			to {
+				transform: translateY(0);
+				opacity: 1;
+			}
+		}
+
+		@keyframes flip-out-up {
+			from {
+				transform: translateY(0);
+				opacity: 1;
+			}
+			to {
+				transform: translateY(-100%);
+				opacity: 0;
+			}
+		}
+
+		@keyframes flip-in-down {
+			from {
+				transform: translateY(-100%);
+				opacity: 0;
+			}
+			to {
+				transform: translateY(0);
+				opacity: 1;
+			}
+		}
+
+		@keyframes flip-out-down {
+			from {
+				transform: translateY(0);
+				opacity: 1;
+			}
+			to {
+				transform: translateY(100%);
+				opacity: 0;
+			}
+		}
+
+		.counter-actions {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 12px;
+		}
+
+		.btn-plus,
+		.btn-minus {
+			border: none;
+			border-radius: 12px;
+			cursor: pointer;
+			color: white;
+			font-weight: 700;
+			box-shadow: 0 8px 20px rgba(59, 130, 246, 0.22);
+			user-select: none;
+			-webkit-user-select: none;
+			-webkit-touch-callout: none;
+			touch-action: manipulation;
+		}
+
+		.btn-plus {
+			flex: none;
+			width: 84px;
+			height: 84px;
+			padding: 8px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 22px;
+			text-align: center;
+			white-space: normal;
+			word-break: break-word;
+			line-height: 1;
+			background: var(--primary);
+		}
+
+
+		.btn-plus:hover {
+			background: var(--primary-hover);
+		}
+
+		.btn-minus {
+			width: 52px;
+			height: 52px;
+			font-size: 28px;
+			line-height: 1;
+			background: var(--minus-bg);
+			box-shadow: 0 8px 18px rgba(100, 116, 139, 0.35);
+		}
+
+		.btn-minus:hover {
+			background: var(--minus-hover);
+		}
+
+		@media (max-width: 640px) {
+			body {
+				overflow-x: hidden;
+			}
+
+			.page {
+				max-width: 100%;
+				padding: 14px;
+			}
+
+			.page-title {
+				font-size: 26px;
+			}
+
+			.settings-btn {
+				padding: 10px 14px;
+				min-height: 46px;
+				font-size: 21px;
+				border-radius: 12px;
+			}
+
+			.counter-card {
+				padding: 14px;
+			}
+
+			.counters.compact {
+				gap: 8px;
+			}
+
+			.counter-value {
+				font-size: 44px;
+			}
+
+			.btn-plus {
+				width: 78px;
+				height: 78px;
+				font-size: 20px;
+			}
+
+
+			.btn-minus {
+				width: 48px;
+				height: 48px;
+				font-size: 26px;
+			}
+
+			.counters.large-actions .btn-plus {
+				width: 88px;
+				height: 88px;
+				font-size: 22px;
+			}
+
+
+			.counters.huge-actions .btn-plus {
+				width: 33vw;
+				height: 33vw;
+				max-width: 132px;
+				max-height: 132px;
+				min-width: 106px;
+				min-height: 106px;
+			}
+
+
+			.counters.huge-actions .counter-value {
+				padding-left: 24px;
+				margin: 0 2px 0 20px;
+			}
+		}
+
+		.overlay {
+			position: fixed;
+			inset: 0;
+			background: rgba(15, 23, 42, 0.35);
+			display: none;
+			align-items: center;
+			justify-content: flex-start;
+			padding: clamp(16px, 7vh, 72px) 20px 20px;
+		}
+
+		.overlay.show {
+			display: flex;
+		}
+
+		.modal {
+			width: min(340px, 100%);
+			background: var(--card);
+			border-radius: var(--radius);
+			border: 1px solid var(--border);
+			box-shadow: var(--shadow);
+			padding: 14px;
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+			max-height: calc(100dvh - 32px);
+			overflow-y: auto;
+		}
+
+		.modal-header {
+			display: flex;
+			align-items: flex-start;
+			justify-content: space-between;
+			gap: 10px;
+		}
+
+		.modal-switches {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+
+		.modal-title {
+			margin: 0;
+			font-size: 18px;
+			font-weight: 700;
+		}
+
+		.sound-toggle-wrap {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.sound-toggle-text {
+			font-size: 13px;
+			color: var(--muted);
+			line-height: 1;
+		}
+
+		.field {
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
+		}
+
+		.field label {
+			color: var(--muted);
+			font-size: 14px;
+		}
+
+		.inline-controls {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			align-items: start;
+			gap: 10px;
+		}
+
+		.inline-control-item {
+			display: flex;
+			flex-direction: column;
+			align-items: flex-start;
+		}
+
+		.inline-control-label {
+			display: flex;
+			align-items: center;
+			height: 20px;
+			line-height: 20px;
+			margin: 0 0 4px 0;
+			color: var(--muted);
+			font-size: 14px;
+		}
+
+		.theme-select {
+			width: 100%;
+			min-width: 0;
+		}
+
+		.ios-switch {
+			position: relative;
+			display: inline-block;
+			width: 48px;
+			height: 30px;
+		}
+
+		.ios-switch input {
+			opacity: 0;
+			width: 0;
+			height: 0;
+		}
+
+		.ios-slider {
+			position: absolute;
+			inset: 0;
+			cursor: pointer;
+			background-color: #cbd5e1;
+			border-radius: 999px;
+			transition: background-color 0.22s ease;
+		}
+
+		.ios-slider::before {
+			content: "";
+			position: absolute;
+			height: 24px;
+			width: 24px;
+			left: 3px;
+			top: 3px;
+			background-color: #ffffff;
+			border-radius: 50%;
+			box-shadow: 0 2px 8px rgba(15, 23, 42, 0.26);
+			transition: transform 0.22s ease;
+		}
+
+		.ios-switch input:checked + .ios-slider {
+			background-color: #34c759;
+		}
+
+		.ios-switch input:checked + .ios-slider::before {
+			transform: translateX(18px);
+		}
+
+		.ios-switch input:disabled + .ios-slider {
+			opacity: 0.45;
+			cursor: not-allowed;
+		}
+
+		.switch-hint {
+			font-size: 11px;
+			color: var(--muted);
+			line-height: 1;
+		}
+
+		.field select,
+		.field input {
+			width: 100%;
+			border: 1px solid var(--border);
+			border-radius: 10px;
+			padding: 9px 11px;
+			font-size: 15px;
+			outline: none;
+		}
+
+		.field select:focus,
+		.field input:focus {
+			border-color: #9db6ff;
+			box-shadow: 0 0 0 3px rgba(79, 109, 245, 0.18);
+		}
+
+		body[data-theme="dark"] .field select {
+			appearance: none;
+			-webkit-appearance: none;
+			background-image: none;
+			background-color: #1f2937;
+			box-shadow: none;
+		}
+
+		body[data-theme="dark"] .field select:focus {
+			box-shadow: none;
+			border-color: #475569;
+		}
+
+		.save-btn {
+			margin-top: 0;
+			border: none;
+			border-radius: 12px;
+			padding: 10px 14px;
+			font-size: 15px;
+			font-weight: 700;
+			cursor: pointer;
+			color: white;
+			background: #4f46e5;
+			box-shadow: 0 10px 20px rgba(79, 70, 229, 0.28);
+		}
+
+		.save-btn:hover {
+			background: #4338ca;
+		}
+
+		.restore-btn {
+			margin-top: 0;
+			border: 1px solid var(--border);
+			border-radius: 12px;
+			padding: 9px 12px;
+			font-size: 14px;
+			font-weight: 700;
+			cursor: pointer;
+			color: var(--control-text);
+			background: var(--control-bg);
+			flex: none;
+			width: auto;
+			white-space: nowrap;
+		}
+
+		.modal-actions {
+			display: flex;
+			align-items: center;
+			justify-content: flex-end;
+			gap: 1em;
+			margin-top: 2px;
+		}
+
+		.modal-actions .save-btn {
+			flex: 1;
+			min-width: 0;
+		}
+
+		.restore-btn:hover {
+			border-color: var(--control-hover-border);
+			background: var(--control-hover-bg);
+		}
+
+		@media (max-width: 640px) {
+			.overlay {
+				padding: calc(env(safe-area-inset-top) + 10px) 12px 12px;
+			}
+
+			.modal {
+				padding: 12px;
+				gap: 8px;
+				max-height: calc(100dvh - 22px);
+			}
+
+			.inline-controls {
+				gap: 8px;
+			}
+
+			.modal-actions {
+				gap: 1em;
+			}
+		}
+	</style>
+</head>
+<body>
+	<main class="page">
+		<div class="top-bar">
+			<h1 class="page-title">计数器</h1>
+			<div class="top-actions">
+				<button id="resetAll" class="reset-btn" type="button">清零</button>
+				<button id="openSettings" class="settings-btn" type="button" aria-label="打开设置" title="设置">⚙</button>
+			</div>
+		</div>
+
+		<section id="counterList" class="counters"></section>
+	</main>
+
+	<div id="settingsOverlay" class="overlay" aria-hidden="true">
+		<section class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+			<div class="modal-header">
+				<h2 id="settingsTitle" class="modal-title">计数器设置</h2>
+				<div class="modal-switches">
+					<div class="sound-toggle-wrap">
+						<span class="sound-toggle-text">声音</span>
+						<label class="ios-switch" for="soundToggle">
+							<input id="soundToggle" type="checkbox" />
+							<span class="ios-slider"></span>
+						</label>
+					</div>
+					<div class="sound-toggle-wrap">
+						<span class="sound-toggle-text">震动</span>
+						<label class="ios-switch" for="vibrationToggle">
+							<input id="vibrationToggle" type="checkbox" checked />
+							<span class="ios-slider"></span>
+						</label>
+						<span id="vibrationSupportHint" class="switch-hint" hidden>不支持</span>
+					</div>
+				</div>
+			</div>
+
+			<div class="field">
+				<label for="pageTitleInput">自定义标题</label>
+				<input id="pageTitleInput" type="text" value="计数器" />
+			</div>
+
+			<div class="field">
+				<div class="inline-controls">
+					<div class="inline-control-item">
+						<label for="themeSelect" class="inline-control-label">主题</label>
+						<select id="themeSelect" class="theme-select">
+							<option value="system">跟随系统</option>
+							<option value="light">浅色</option>
+							<option value="dark">深色</option>
+						</select>
+					</div>
+					<div class="inline-control-item">
+						<label for="counterCount" class="inline-control-label">计数器个数</label>
+						<select id="counterCount">
+							<option value="1">1</option>
+							<option value="2">2</option>
+							<option value="3">3</option>
+							<option value="4">4</option>
+							<option value="5">5</option>
+						</select>
+					</div>
+				</div>
+			</div>
+
+			<div id="nameFields"></div>
+
+			<div class="modal-actions">
+				<button id="restoreInitial" class="restore-btn" type="button">重置</button>
+				<button id="saveSettings" class="save-btn" type="button">保存设置</button>
+			</div>
+		</section>
+	</div>
+
+	<script>
+		const defaultNamesMap = {
+			1: ["好习惯"],
+			2: ["电车", "油车"],
+			3: ["好运", "财富", "功德"],
+			4: ["甲", "乙", "丙", "丁"],
+			5: ["麻雀", "喜鹊", "灰喜鹊", "绿头鸭", "鸳鸯"]
+		};
+
+		const INITIAL_STATE = {
+			title: "计数器",
+			theme: "system",
+			soundEnabled: false,
+			vibrationEnabled: true,
+			names: [...defaultNamesMap[1]],
+			values: [0]
+		};
+
+		const appState = {
+			title: INITIAL_STATE.title,
+			theme: INITIAL_STATE.theme,
+			soundEnabled: INITIAL_STATE.soundEnabled,
+			vibrationEnabled: INITIAL_STATE.vibrationEnabled,
+			names: [...INITIAL_STATE.names],
+			values: [...INITIAL_STATE.values]
+		};
+
+		const STORAGE_KEY = "counter_state_v1";
+
+		const plusColorThemesByTheme = {
+			light: [
+				{ bg: "#9CCF5B", hover: "#8ABD4C", shadow: "0 8px 20px rgba(156, 207, 91, 0.35)" },
+				{ bg: "#E9AFC2", hover: "#D99DB2", shadow: "0 8px 20px rgba(233, 175, 194, 0.35)" },
+				{ bg: "#40C9C6", hover: "#2FB6B2", shadow: "0 8px 20px rgba(64, 201, 198, 0.35)" },
+				{ bg: "#FF9A76", hover: "#F18463", shadow: "0 8px 20px rgba(255, 154, 118, 0.35)" },
+				{ bg: "#9A6CFF", hover: "#8458E8", shadow: "0 8px 20px rgba(154, 108, 255, 0.35)" }
+			],
+			dark: [
+				{ bg: "#7EB94D", hover: "#6EA73F", shadow: "0 8px 20px rgba(126, 185, 77, 0.38)" },
+				{ bg: "#CF90A7", hover: "#BD7F97", shadow: "0 8px 20px rgba(207, 144, 167, 0.38)" },
+				{ bg: "#2AAFA8", hover: "#23968F", shadow: "0 8px 20px rgba(42, 175, 168, 0.4)" },
+				{ bg: "#E88866", hover: "#D87755", shadow: "0 8px 20px rgba(232, 136, 102, 0.4)" },
+				{ bg: "#7B52D9", hover: "#6945BC", shadow: "0 8px 20px rgba(123, 82, 217, 0.4)" }
+			]
+		};
+
+		const counterList = document.getElementById("counterList");
+		const pageTitle = document.querySelector(".page-title");
+		const settingsOverlay = document.getElementById("settingsOverlay");
+		const resetAll = document.getElementById("resetAll");
+		const openSettings = document.getElementById("openSettings");
+		const restoreInitial = document.getElementById("restoreInitial");
+		const saveSettings = document.getElementById("saveSettings");
+		const counterCount = document.getElementById("counterCount");
+		const pageTitleInput = document.getElementById("pageTitleInput");
+		const themeSelect = document.getElementById("themeSelect");
+		const soundToggle = document.getElementById("soundToggle");
+		const vibrationToggle = document.getElementById("vibrationToggle");
+		const vibrationSupportHint = document.getElementById("vibrationSupportHint");
+		const nameFields = document.getElementById("nameFields");
+		const isVibrationSupported = typeof navigator !== "undefined" && typeof navigator.vibrate === "function";
+		const systemThemeMediaQuery = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+		let audioContext = null;
+
+		function resetToInitialState() {
+			appState.title = INITIAL_STATE.title;
+			appState.theme = INITIAL_STATE.theme;
+			appState.soundEnabled = INITIAL_STATE.soundEnabled;
+			appState.vibrationEnabled = INITIAL_STATE.vibrationEnabled;
+			appState.names = [...INITIAL_STATE.names];
+			appState.values = [...INITIAL_STATE.values];
+		}
+
+		function resolveTheme(theme) {
+			if (theme === "dark" || theme === "light") {
+				return theme;
+			}
+
+			if (systemThemeMediaQuery && systemThemeMediaQuery.matches) {
+				return "dark";
+			}
+
+			return "light";
+		}
+
+		function applyTheme(theme) {
+			const nextTheme = resolveTheme(theme);
+			document.body.setAttribute("data-theme", nextTheme);
+		}
+
+		function saveState() {
+			const payload = {
+				title: appState.title,
+				theme: appState.theme,
+				soundEnabled: appState.soundEnabled,
+				vibrationEnabled: appState.vibrationEnabled,
+				names: appState.names,
+				values: appState.values
+			};
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+		}
+
+		function loadState() {
+			const raw = localStorage.getItem(STORAGE_KEY);
+			if (!raw) {
+				return;
+			}
+
+			try {
+				const parsed = JSON.parse(raw);
+				const names = Array.isArray(parsed.names) ? parsed.names.slice(0, 5).map((name) => String(name || "").trim()) : [];
+				const validNames = names.filter((name) => name.length > 0);
+				const normalizedNames = validNames.length > 0 ? validNames : [...defaultNamesMap[1]];
+				const normalizedValues = Array.isArray(parsed.values)
+					? normalizedNames.map((_, index) => Number.isFinite(Number(parsed.values[index])) ? Number(parsed.values[index]) : 0)
+					: normalizedNames.map(() => 0);
+
+				appState.title = typeof parsed.title === "string" && parsed.title.trim().length > 0 ? parsed.title.trim() : "计数器";
+				appState.theme = ["light", "dark", "system"].includes(parsed.theme) ? parsed.theme : "system";
+				appState.soundEnabled = Boolean(parsed.soundEnabled);
+				appState.vibrationEnabled = parsed.vibrationEnabled === undefined ? true : Boolean(parsed.vibrationEnabled);
+				appState.names = normalizedNames;
+				appState.values = normalizedValues;
+			} catch {
+				localStorage.removeItem(STORAGE_KEY);
+			}
+		}
+
+		function getPlusThemes() {
+			const activeTheme = resolveTheme(appState.theme);
+			return plusColorThemesByTheme[activeTheme] || plusColorThemesByTheme.light;
+		}
+
+		function createValueNode(valueNumber) {
+			const value = document.createElement("div");
+			value.className = "counter-value";
+			value.dataset.value = String(valueNumber);
+
+			const digit = document.createElement("span");
+			digit.className = "value-digit current";
+			digit.textContent = String(valueNumber);
+			value.appendChild(digit);
+			return value;
+		}
+
+		function animateValueChange(valueElement, nextValue) {
+			const previousValue = Number(valueElement.dataset.value ?? "0");
+			if (previousValue === nextValue) {
+				return;
+			}
+
+			const direction = nextValue > previousValue ? "up" : "down";
+			const currentDigit = valueElement.querySelector(".value-digit.current");
+			if (!currentDigit) {
+				valueElement.textContent = String(nextValue);
+				valueElement.dataset.value = String(nextValue);
+				return;
+			}
+
+			valueElement.querySelectorAll(".value-digit.incoming").forEach((node) => node.remove());
+
+			const incomingDigit = document.createElement("span");
+			incomingDigit.className = `value-digit incoming ${direction}`;
+			incomingDigit.textContent = String(nextValue);
+			valueElement.appendChild(incomingDigit);
+
+			requestAnimationFrame(() => {
+				currentDigit.classList.add("exit", direction);
+				incomingDigit.classList.add("enter");
+			});
+
+			incomingDigit.addEventListener("animationend", () => {
+				currentDigit.remove();
+				incomingDigit.className = "value-digit current";
+				valueElement.dataset.value = String(nextValue);
+			}, { once: true });
+		}
+
+		function getAudioContext() {
+			if (audioContext) {
+				if (audioContext.state === "suspended") {
+					audioContext.resume();
+				}
+				return audioContext;
+			}
+
+			const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+			if (!AudioContextClass) {
+				return null;
+			}
+
+			audioContext = new AudioContextClass();
+			return audioContext;
+		}
+
+		function playCoinSound() {
+			if (!appState.soundEnabled) {
+				return;
+			}
+
+			const context = getAudioContext();
+			if (!context) {
+				return;
+			}
+
+			const now = context.currentTime;
+
+			const playDing = (startAt, frequency, volume) => {
+				const oscillatorA = context.createOscillator();
+				const oscillatorB = context.createOscillator();
+				const gainNode = context.createGain();
+
+				oscillatorA.type = "triangle";
+				oscillatorA.frequency.setValueAtTime(frequency, startAt);
+				oscillatorA.frequency.exponentialRampToValueAtTime(frequency * 0.68, startAt + 0.08);
+
+				oscillatorB.type = "sine";
+				oscillatorB.frequency.setValueAtTime(frequency * 1.5, startAt);
+				oscillatorB.frequency.exponentialRampToValueAtTime(frequency * 1.05, startAt + 0.08);
+
+				gainNode.gain.setValueAtTime(0.0001, startAt);
+				gainNode.gain.exponentialRampToValueAtTime(volume, startAt + 0.01);
+				gainNode.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.1);
+
+				oscillatorA.connect(gainNode);
+				oscillatorB.connect(gainNode);
+				gainNode.connect(context.destination);
+
+				oscillatorA.start(startAt);
+				oscillatorB.start(startAt);
+				oscillatorA.stop(startAt + 0.11);
+				oscillatorB.stop(startAt + 0.11);
+			};
+
+			playDing(now, 1460, 0.15);
+			playDing(now + 0.095, 1960, 0.12);
+		}
+
+		function triggerVibration(pattern = 16) {
+			if (!appState.vibrationEnabled) {
+				return;
+			}
+
+			if (!isVibrationSupported) {
+				return;
+			}
+
+			navigator.vibrate(pattern);
+		}
+
+		function syncVibrationControl() {
+			if (isVibrationSupported) {
+				vibrationToggle.disabled = false;
+				vibrationSupportHint.hidden = true;
+				return;
+			}
+
+			vibrationToggle.checked = false;
+			vibrationToggle.disabled = true;
+			vibrationSupportHint.hidden = false;
+			appState.vibrationEnabled = false;
+		}
+
+		function renderCounters() {
+			counterList.innerHTML = "";
+			const total = appState.names.length;
+			const plusColorThemes = getPlusThemes();
+			counterList.classList.toggle("compact", total >= 4);
+			counterList.classList.toggle("large-actions", total <= 3);
+			counterList.classList.toggle("huge-actions", total <= 2);
+
+			appState.names.forEach((name, index) => {
+				const card = document.createElement("article");
+				card.className = "counter-card";
+
+				const value = createValueNode(appState.values[index]);
+
+				const actions = document.createElement("div");
+				actions.className = "counter-actions";
+
+				const plusButton = document.createElement("button");
+				plusButton.type = "button";
+				plusButton.className = "btn-plus";
+				plusButton.textContent = `${name}+1`;
+
+				const colorIndex = total === 1 ? 0 : index % plusColorThemes.length;
+				const color = plusColorThemes[colorIndex];
+				plusButton.style.background = color.bg;
+				plusButton.style.boxShadow = color.shadow;
+				plusButton.addEventListener("mouseenter", () => {
+					plusButton.style.background = color.hover;
+				});
+				plusButton.addEventListener("mouseleave", () => {
+					plusButton.style.background = color.bg;
+				});
+
+				plusButton.addEventListener("click", () => {
+					appState.values[index] += 1;
+					animateValueChange(value, appState.values[index]);
+					playCoinSound();
+					triggerVibration(14);
+					saveState();
+				});
+
+				const minusButton = document.createElement("button");
+				minusButton.type = "button";
+				minusButton.className = "btn-minus";
+				minusButton.textContent = "-";
+				minusButton.addEventListener("click", () => {
+					appState.values[index] -= 1;
+					animateValueChange(value, appState.values[index]);
+					triggerVibration(10);
+					saveState();
+				});
+
+				actions.append(plusButton, value, minusButton);
+				card.append(actions);
+				counterList.appendChild(card);
+			});
+		}
+
+		function renderNameInputs(names) {
+			nameFields.innerHTML = "";
+
+			names.forEach((name, index) => {
+				const fieldWrap = document.createElement("div");
+				fieldWrap.className = "field";
+
+				const label = document.createElement("label");
+				label.setAttribute("for", `counterName${index}`);
+				label.textContent = `计数器名称 ${index + 1}`;
+
+				const input = document.createElement("input");
+				input.id = `counterName${index}`;
+				input.type = "text";
+				input.value = name;
+
+				fieldWrap.append(label, input);
+				nameFields.appendChild(fieldWrap);
+			});
+		}
+
+		function openSettingsModal() {
+			const count = appState.names.length;
+			counterCount.value = String(count);
+			pageTitleInput.value = appState.title;
+			themeSelect.value = appState.theme;
+			soundToggle.checked = appState.soundEnabled;
+			vibrationToggle.checked = appState.vibrationEnabled;
+			syncVibrationControl();
+			renderNameInputs([...appState.names]);
+			settingsOverlay.classList.add("show");
+			settingsOverlay.setAttribute("aria-hidden", "false");
+		}
+
+		function closeSettingsModal() {
+			settingsOverlay.classList.remove("show");
+			settingsOverlay.setAttribute("aria-hidden", "true");
+		}
+
+		counterCount.addEventListener("change", () => {
+			const count = Number(counterCount.value);
+			const defaults = defaultNamesMap[count] || [];
+			renderNameInputs([...defaults]);
+		});
+
+		openSettings.addEventListener("click", openSettingsModal);
+
+		restoreInitial.addEventListener("click", () => {
+			triggerVibration(10);
+			const confirmed = window.confirm("确认重置吗？这会重置标题、主题、声音、震动、名称和计数值。");
+			if (!confirmed) {
+				return;
+			}
+
+			resetToInitialState();
+			pageTitle.textContent = appState.title;
+			applyTheme(appState.theme);
+			renderCounters();
+			saveState();
+			closeSettingsModal();
+		});
+
+		resetAll.addEventListener("click", () => {
+			triggerVibration(12);
+			appState.values = appState.values.map(() => 0);
+			renderCounters();
+			saveState();
+		});
+
+		saveSettings.addEventListener("click", () => {
+			triggerVibration(10);
+			const count = Number(counterCount.value);
+			const nextTitle = pageTitleInput.value.trim() || "计数器";
+			const nextTheme = ["light", "dark", "system"].includes(themeSelect.value) ? themeSelect.value : "system";
+			const nextSoundEnabled = soundToggle.checked;
+			const nextVibrationEnabled = isVibrationSupported ? vibrationToggle.checked : false;
+			const inputs = [...nameFields.querySelectorAll("input")];
+			const nextNames = inputs.map((input, index) => {
+				const raw = input.value.trim();
+				if (raw.length > 0) {
+					return raw;
+				}
+				const defaults = defaultNamesMap[count] || [];
+				return defaults[index] || `计数器${index + 1}`;
+			});
+
+			const nextValues = new Array(count).fill(0).map((_, index) => appState.values[index] ?? 0);
+
+			appState.title = nextTitle;
+			appState.theme = nextTheme;
+			appState.soundEnabled = nextSoundEnabled;
+			appState.vibrationEnabled = nextVibrationEnabled;
+			appState.names = nextNames;
+			appState.values = nextValues;
+			pageTitle.textContent = appState.title;
+			applyTheme(appState.theme);
+			renderCounters();
+			saveState();
+			closeSettingsModal();
+		});
+
+		settingsOverlay.addEventListener("click", (event) => {
+			if (event.target === settingsOverlay) {
+				closeSettingsModal();
+			}
+		});
+
+		if (systemThemeMediaQuery) {
+			systemThemeMediaQuery.addEventListener("change", () => {
+				if (appState.theme !== "system") {
+					return;
+				}
+
+				applyTheme(appState.theme);
+				renderCounters();
+			});
+		}
+
+		loadState();
+		syncVibrationControl();
+		applyTheme(appState.theme);
+		pageTitle.textContent = appState.title;
+		renderCounters();
+	</script>
+</body>
+</html>
