@@ -184,6 +184,15 @@
 			margin: 0 4px 0 16px;
 		}
 
+		.counters.six-panels {
+			gap: 8px;
+		}
+
+		.counters.six-panels .counter-card {
+			padding-top: 10px;
+			padding-bottom: 10px;
+		}
+
 		.counter-card {
 			background: var(--card);
 			border-radius: var(--radius);
@@ -314,6 +323,8 @@
 			color: white;
 			font-weight: 700;
 			box-shadow: 0 8px 20px rgba(59, 130, 246, 0.22);
+			transform: translateY(0) scale(1);
+			transition: transform 90ms cubic-bezier(0.2, 0.75, 0.35, 1), box-shadow 90ms ease, filter 90ms ease;
 			user-select: none;
 			-webkit-user-select: none;
 			-webkit-touch-callout: none;
@@ -341,6 +352,12 @@
 			background: var(--primary-hover);
 		}
 
+		.btn-plus:active {
+			transform: translateY(4px) scale(0.975);
+			box-shadow: 0 2px 8px rgba(30, 64, 175, 0.35);
+			filter: brightness(0.96);
+		}
+
 		.btn-minus {
 			width: 52px;
 			height: 52px;
@@ -352,6 +369,23 @@
 
 		.btn-minus:hover {
 			background: var(--minus-hover);
+		}
+
+		.btn-minus:active {
+			transform: translateY(3px) scale(0.97);
+			box-shadow: 0 2px 8px rgba(51, 65, 85, 0.38);
+			filter: brightness(0.95);
+		}
+
+		.total-summary {
+			margin: 14px 4px 0;
+			font-size: 12px;
+			line-height: 1.4;
+			color: var(--muted);
+			text-align: center;
+			user-select: none;
+			-webkit-user-select: none;
+			-webkit-touch-callout: none;
 		}
 
 		@media (max-width: 640px) {
@@ -686,6 +720,7 @@
 		</div>
 
 		<section id="counterList" class="counters"></section>
+		<p id="totalSummary" class="total-summary">总计：0</p>
 	</main>
 
 	<div id="settingsOverlay" class="overlay" aria-hidden="true">
@@ -734,6 +769,7 @@
 							<option value="3">3</option>
 							<option value="4">4</option>
 							<option value="5">5</option>
+							<option value="6">6</option>
 						</select>
 					</div>
 				</div>
@@ -754,7 +790,8 @@
 			2: ["电车", "油车"],
 			3: ["好运", "财富", "功德"],
 			4: ["甲", "乙", "丙", "丁"],
-			5: ["麻雀", "喜鹊", "灰喜鹊", "绿头鸭", "鸳鸯"]
+			5: ["麻雀", "喜鹊", "灰喜鹊", "绿头鸭", "鸳鸯"],
+			6: ["麻雀", "喜鹊", "灰喜鹊", "绿头鸭", "鸳鸯", "青鸟"]
 		};
 
 		const INITIAL_STATE = {
@@ -783,14 +820,16 @@
 				{ bg: "#E9AFC2", hover: "#D99DB2", shadow: "0 8px 20px rgba(233, 175, 194, 0.35)" },
 				{ bg: "#40C9C6", hover: "#2FB6B2", shadow: "0 8px 20px rgba(64, 201, 198, 0.35)" },
 				{ bg: "#FF9A76", hover: "#F18463", shadow: "0 8px 20px rgba(255, 154, 118, 0.35)" },
-				{ bg: "#9A6CFF", hover: "#8458E8", shadow: "0 8px 20px rgba(154, 108, 255, 0.35)" }
+				{ bg: "#9A6CFF", hover: "#8458E8", shadow: "0 8px 20px rgba(154, 108, 255, 0.35)" },
+				{ bg: "#22B8CF", hover: "#179BB0", shadow: "0 8px 20px rgba(34, 184, 207, 0.35)" }
 			],
 			dark: [
 				{ bg: "#7EB94D", hover: "#6EA73F", shadow: "0 8px 20px rgba(126, 185, 77, 0.38)" },
 				{ bg: "#CF90A7", hover: "#BD7F97", shadow: "0 8px 20px rgba(207, 144, 167, 0.38)" },
 				{ bg: "#2AAFA8", hover: "#23968F", shadow: "0 8px 20px rgba(42, 175, 168, 0.4)" },
 				{ bg: "#E88866", hover: "#D87755", shadow: "0 8px 20px rgba(232, 136, 102, 0.4)" },
-				{ bg: "#7B52D9", hover: "#6945BC", shadow: "0 8px 20px rgba(123, 82, 217, 0.4)" }
+				{ bg: "#7B52D9", hover: "#6945BC", shadow: "0 8px 20px rgba(123, 82, 217, 0.4)" },
+				{ bg: "#1B9CB5", hover: "#16869C", shadow: "0 8px 20px rgba(27, 156, 181, 0.42)" }
 			]
 		};
 
@@ -808,6 +847,7 @@
 		const vibrationToggle = document.getElementById("vibrationToggle");
 		const vibrationSupportHint = document.getElementById("vibrationSupportHint");
 		const nameFields = document.getElementById("nameFields");
+		const totalSummary = document.getElementById("totalSummary");
 		const isVibrationSupported = typeof navigator !== "undefined" && typeof navigator.vibrate === "function";
 		const systemThemeMediaQuery = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
 		let audioContext = null;
@@ -858,7 +898,7 @@
 
 			try {
 				const parsed = JSON.parse(raw);
-				const names = Array.isArray(parsed.names) ? parsed.names.slice(0, 5).map((name) => String(name || "").trim()) : [];
+				const names = Array.isArray(parsed.names) ? parsed.names.slice(0, 6).map((name) => String(name || "").trim()) : [];
 				const validNames = names.filter((name) => name.length > 0);
 				const normalizedNames = validNames.length > 0 ? validNames : [...defaultNamesMap[1]];
 				const normalizedValues = Array.isArray(parsed.values)
@@ -879,6 +919,15 @@
 		function getPlusThemes() {
 			const activeTheme = resolveTheme(appState.theme);
 			return plusColorThemesByTheme[activeTheme] || plusColorThemesByTheme.light;
+		}
+
+		function updateTotalSummary() {
+			if (!totalSummary) {
+				return;
+			}
+
+			const totalCount = appState.values.reduce((sum, value) => sum + (Number(value) || 0), 0);
+			totalSummary.textContent = `总计：${totalCount}`;
 		}
 
 		function createValueNode(valueNumber) {
@@ -955,35 +1004,28 @@
 
 			const now = context.currentTime;
 
-			const playDing = (startAt, frequency, volume) => {
-				const oscillatorA = context.createOscillator();
-				const oscillatorB = context.createOscillator();
+			const playTone = (startAt, fromFreq, toFreq, attack, decay, volume, wave = "square") => {
+				const oscillator = context.createOscillator();
 				const gainNode = context.createGain();
 
-				oscillatorA.type = "triangle";
-				oscillatorA.frequency.setValueAtTime(frequency, startAt);
-				oscillatorA.frequency.exponentialRampToValueAtTime(frequency * 0.68, startAt + 0.08);
-
-				oscillatorB.type = "sine";
-				oscillatorB.frequency.setValueAtTime(frequency * 1.5, startAt);
-				oscillatorB.frequency.exponentialRampToValueAtTime(frequency * 1.05, startAt + 0.08);
+				oscillator.type = wave;
+				oscillator.frequency.setValueAtTime(fromFreq, startAt);
+				oscillator.frequency.exponentialRampToValueAtTime(toFreq, startAt + decay);
 
 				gainNode.gain.setValueAtTime(0.0001, startAt);
-				gainNode.gain.exponentialRampToValueAtTime(volume, startAt + 0.01);
-				gainNode.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.1);
+				gainNode.gain.exponentialRampToValueAtTime(volume, startAt + attack);
+				gainNode.gain.exponentialRampToValueAtTime(0.0001, startAt + decay);
 
-				oscillatorA.connect(gainNode);
-				oscillatorB.connect(gainNode);
+				oscillator.connect(gainNode);
 				gainNode.connect(context.destination);
 
-				oscillatorA.start(startAt);
-				oscillatorB.start(startAt);
-				oscillatorA.stop(startAt + 0.11);
-				oscillatorB.stop(startAt + 0.11);
+				oscillator.start(startAt);
+				oscillator.stop(startAt + decay + 0.01);
 			};
 
-			playDing(now, 1460, 0.15);
-			playDing(now + 0.095, 1960, 0.12);
+			playTone(now, 1750, 1320, 0.0025, 0.06, 0.12, "square");
+			playTone(now + 0.016, 2450, 1780, 0.002, 0.05, 0.09, "triangle");
+			playTone(now + 0.045, 3100, 2250, 0.0018, 0.042, 0.06, "sine");
 		}
 
 		function triggerVibration(pattern = 16) {
@@ -1018,6 +1060,7 @@
 			counterList.classList.toggle("compact", total >= 4);
 			counterList.classList.toggle("large-actions", total <= 3);
 			counterList.classList.toggle("huge-actions", total <= 2);
+			counterList.classList.toggle("six-panels", total === 6);
 
 			appState.names.forEach((name, index) => {
 				const card = document.createElement("article");
@@ -1067,6 +1110,8 @@
 				card.append(actions);
 				counterList.appendChild(card);
 			});
+
+			updateTotalSummary();
 		}
 
 		function renderNameInputs(names) {
