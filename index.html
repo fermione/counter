@@ -789,9 +789,9 @@
 			1: ["好习惯"],
 			2: ["电车", "油车"],
 			3: ["好运", "财富", "功德"],
-			4: ["甲", "乙", "丙", "丁"],
-			5: ["麻雀", "喜鹊", "灰喜鹊", "绿头鸭", "鸳鸯"],
-			6: ["麻雀", "喜鹊", "灰喜鹊", "绿头鸭", "鸳鸯", "青鸟"]
+			4: ["张三", "李四", "王五", "赵六"],
+			5: ["平静", "开心", "担心", "生气", "伤感"],
+			6: ["麻雀", "喜鹊", "灰喜鹊", "绿头鸭", "鸳鸯", "乌鸦"]
 		};
 
 		const INITIAL_STATE = {
@@ -1090,6 +1090,7 @@
 				plusButton.addEventListener("click", () => {
 					appState.values[index] += 1;
 					animateValueChange(value, appState.values[index]);
+					updateTotalSummary();
 					playCoinSound();
 					triggerVibration(14);
 					saveState();
@@ -1102,6 +1103,7 @@
 				minusButton.addEventListener("click", () => {
 					appState.values[index] -= 1;
 					animateValueChange(value, appState.values[index]);
+					updateTotalSummary();
 					triggerVibration(10);
 					saveState();
 				});
